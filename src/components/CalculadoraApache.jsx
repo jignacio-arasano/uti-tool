@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { CampoInput } from './CampoInput'
 import { calcularApacheII } from '../lib/apache'
 import { interpretar } from '../lib/interpretacion'
@@ -92,9 +92,12 @@ export function CalculadoraApache({ onResultado }) {
   const interp = resultado ? interpretar(resultado.score, datos.tipoIngreso) : null
   const alertasCoherencia = validarCoherencia(datos)
   
-  if (resultado && onResultado) {
-    onResultado({ ...datos, ...resultado, interpretacion: interp })
-  }
+  // Notificar al padre solo cuando cambia el resultado, no en cada render
+  useEffect(() => {
+    if (resultado && onResultado) {
+      onResultado({ ...datos, ...resultado, interpretacion: interp })
+    }
+  }, [resultado?.score, interp?.color, datos.tipoIngreso, datos.etiqueta])
   
   const guardar = () => {
     if (!resultado) return
@@ -342,8 +345,8 @@ export function CalculadoraApache({ onResultado }) {
       )}
       
       <div className="wizard-nav">
-        {modo === 'wizard' && paso > 0 && paso < PASOS.length - 1 && (
-          <button className="btn btn-secondary" onClick={anterior}>Atrás</button>
+        {modo === 'wizard' && paso > 0 && (
+          <button className="btn btn-secondary" onClick={anterior}>← Atrás</button>
         )}
         {modo === 'wizard' && paso < PASOS.length - 1 && (
           <button className="btn btn-primary" onClick={siguiente}>Siguiente →</button>
