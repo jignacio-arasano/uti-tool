@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import { CampoInput } from './CampoInput'
 import { calcularSOFA, calcularQSOFA } from '../lib/sofa'
 import { guardarHistorial } from '../lib/version'
+import { seedFromMemory, updateSessionMemory } from '../lib/sessionMemory'
 
 export function CalculadoraSOFA({ onResultado }) {
   const [vista, setVista] = useState('sofa')  // 'sofa' o 'qsofa'
   const [datos, setDatos] = useState(() => {
     const guardado = sessionStorage.getItem('sofaWIP')
-    return guardado ? JSON.parse(guardado) : {}
+    return seedFromMemory(guardado ? JSON.parse(guardado) : {})
   })
   const [guardado, setGuardado] = useState(false)
   
@@ -15,6 +16,7 @@ export function CalculadoraSOFA({ onResultado }) {
     const nuevo = { ...datos, [k]: v }
     setDatos(nuevo)
     sessionStorage.setItem('sofaWIP', JSON.stringify(nuevo))
+    updateSessionMemory(nuevo)
   }
   
   const sofa = calcularSOFA(datos)

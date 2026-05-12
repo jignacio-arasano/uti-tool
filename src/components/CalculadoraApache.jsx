@@ -6,6 +6,7 @@ import { guardarHistorial } from '../lib/version'
 import { parsearDictadoCompleto } from '../lib/dictadoBloque'
 import { crearReconocedor } from '../lib/voz'
 import { validarCoherencia } from '../lib/validacion'
+import { seedFromMemory, updateSessionMemory } from '../lib/sessionMemory'
 
 const PASOS = [
   'signos', 'oxigeno', 'gases', 'electrolitos', 'sangre', 'edad', 'resultado'
@@ -24,7 +25,7 @@ export function CalculadoraApache({ onResultado }) {
   const [paso, setPaso] = useState(0)
   const [datos, setDatos] = useState(() => {
     const guardado = sessionStorage.getItem('apacheWIP')
-    return guardado ? JSON.parse(guardado) : { tipoIngreso: 'general' }
+    return seedFromMemory(guardado ? JSON.parse(guardado) : { tipoIngreso: 'general' })
   })
   const [dictando, setDictando] = useState(false)
   const [mensajeDictado, setMensajeDictado] = useState('')
@@ -35,12 +36,14 @@ export function CalculadoraApache({ onResultado }) {
     const nuevo = { ...datos, [key]: value }
     setDatos(nuevo)
     sessionStorage.setItem('apacheWIP', JSON.stringify(nuevo))
+    updateSessionMemory(nuevo)
   }
   
   const updateMultiple = (campos) => {
     const nuevo = { ...datos, ...campos }
     setDatos(nuevo)
     sessionStorage.setItem('apacheWIP', JSON.stringify(nuevo))
+    updateSessionMemory(nuevo)
   }
   
   const dictarBloque = () => {
