@@ -1,7 +1,7 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-const GEMINI_MODEL = import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash'
+const GEMINI_MODEL = (import.meta.env.VITE_GEMINI_MODEL || 'gemini-2.0-flash').replace('models/', '')
 
 function getHeaders() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -54,13 +54,19 @@ export async function guardarHistoriaClinicaSupabase(payload) {
   return response.json()
 }
 
-
-async function resolverModeloGemini() {
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`)
-  if (!response.ok) return GEMINI_MODEL
-  const data = await response.json()
-  const compatible = (data.models || []).find(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-  return compatible?.name?.replace('models/', '') || GEMINI_MODEL
+async function modelosCompatibles() {
+  const candidatosDefault = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash']
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${GEMINI_API_KEY}`)
+    if (!response.ok) return [GEMINI_MODEL, ...candidatosDefault]
+    const data = await response.json()
+    const compatibles = (data.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
+      .map(m => m.name.replace('models/', ''))
+    return Array.from(new Set([GEMINI_MODEL, ...compatibles, ...candidatosDefault]))
+  } catch {
+    return [GEMINI_MODEL, ...candidatosDefault]
+  }
 }
 
 export async function generarHistoriaConGemini({ datosPaciente, dictado }) {
@@ -68,31 +74,28 @@ export async function generarHistoriaConGemini({ datosPaciente, dictado }) {
 
   const prompt = `Sos un médico intensivista. Generá una historia clínica breve y estructurada en español rioplatense.\nDatos de paciente: ${JSON.stringify(datosPaciente)}\nDictado del médico: ${dictado}\n\nFormato:\n1) Motivo de internación\n2) Estado actual (hemodinámico, respiratorio, neurológico, renal)\n3) Estudios relevantes\n4) Impresión diagnóstica\n5) Plan`
 
-  let model = GEMINI_MODEL
-  let response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  })
+  const modelos = await modelosCompatibles()
+  let ultimoError = ''
 
-  if (response.status === 404) {
-    model = await resolverModeloGemini()
-    response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
+  for (const model of modelos) {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
       })
     })
+
+    if (response.ok) {
+      const data = await response.json()
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+    }
+
+    ultimoError = await response.text()
+    if (response.status !== 404) {
+      throw new Error(`Gemini error: ${response.status} ${ultimoError}`)
+    }
   }
 
-  if (!response.ok) {
-    const errText = await response.text()
-    throw new Error(`Gemini error: ${response.status} ${errText}`)
-  }
-
-  const data = await response.json()
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || ''
+  throw new Error(`Gemini error: 404 Ningún modelo disponible para generateContent. Último detalle: ${ultimoError}`)
 }
