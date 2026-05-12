@@ -21,7 +21,8 @@ const TABS = [
   { id: 'hc', label: 'Historia Clínica' },
   { id: 'utiles', label: 'Útiles' },
   { id: 'ocr', label: '📷 OCR' },
-  { id: 'historial', label: 'Historial' }
+  { id: 'historial', label: 'Historial' },
+  { id: 'hc', label: 'Historia Clínica' }
 ]
 
 export default function App() {
