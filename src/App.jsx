@@ -18,6 +18,7 @@ const TABS = [
   { id: 'vaso', label: 'Vasopresores' },
   { id: 'balance', label: 'Balance' },
   { id: 'evol', label: 'Evolución' },
+  { id: 'hc', label: 'Historia Clínica' },
   { id: 'utiles', label: 'Útiles' },
   { id: 'ocr', label: '📷 OCR' },
   { id: 'historial', label: 'Historial' },
