@@ -8,6 +8,7 @@ import { GeneradorEvolucion } from './components/GeneradorEvolucion'
 import { HerramientasUtiles } from './components/HerramientasUtiles'
 import { Historial } from './components/Historial'
 import { CapturaOCR } from './components/CapturaOCR'
+import { HistoriaClinica } from './components/HistoriaClinica'
 import { VERSION } from './lib/version'
 
 const TABS = [
@@ -17,6 +18,7 @@ const TABS = [
   { id: 'vaso', label: 'Vasopresores' },
   { id: 'balance', label: 'Balance' },
   { id: 'evol', label: 'Evolución' },
+  { id: 'hc', label: '🧾 Historia Clínica' },
   { id: 'utiles', label: 'Útiles' },
   { id: 'ocr', label: '📷 OCR' },
   { id: 'historial', label: 'Historial' }
@@ -70,6 +72,14 @@ export default function App() {
           >
             v{VERSION.app}
           </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setTab('hc')}
+            style={{ marginLeft: 8, padding: '8px 10px', fontSize: 12 }}
+            aria-label="Abrir sección de historia clínica"
+          >
+            🧾 Historia Clínica
+          </button>
         </div>
       </header>
       
@@ -87,6 +97,14 @@ export default function App() {
           <button onClick={() => setShowVersion(false)} 
             style={{ marginTop: 8, fontSize: 12, color: 'var(--accent)' }}>
             Cerrar
+          </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setTab('hc')}
+            style={{ marginLeft: 8, padding: '8px 10px', fontSize: 12 }}
+            aria-label="Abrir sección de historia clínica"
+          >
+            🧾 Historia Clínica
           </button>
         </div>
       )}
@@ -116,6 +134,7 @@ export default function App() {
         {tab === 'utiles' && <HerramientasUtiles />}
         {tab === 'ocr' && <CapturaOCR onValores={aplicarOCR} />}
         {tab === 'historial' && <Historial />}
+        {tab === 'hc' && <HistoriaClinica apacheData={apacheData} sofaData={sofaData} />}
       </main>
       
       <footer style={{ padding: '20px', textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', borderTop: '1px solid var(--border)', marginTop: 40 }}>

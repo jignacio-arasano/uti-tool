@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { crearReconocedor, extraerNumero } from '../lib/voz'
 import { validar } from '../lib/validacion'
+import { getSessionMemory, updateSessionMemory } from '../lib/sessionMemory'
 
 export function CampoInput({ 
   label, 
@@ -41,9 +42,9 @@ export function CampoInput({
       (texto) => {
         if (type === 'number') {
           const num = extraerNumero(texto)
-          if (num !== null) onChange(String(num))
+          if (num !== null) handleChange(String(num))
         } else {
-          onChange(texto)
+          handleChange(texto)
         }
         setListening(false)
       },
@@ -60,6 +61,21 @@ export function CampoInput({
     }
   }
   
+
+  useEffect(() => {
+    if (!campo) return
+    if (value !== undefined && value !== null && String(value) !== '') return
+    const mem = getSessionMemory()
+    if (mem[campo] !== undefined && mem[campo] !== null && String(mem[campo]) !== '') {
+      onChange(String(mem[campo]))
+    }
+  }, [campo])
+
+  const handleChange = (nextValue) => {
+    onChange(nextValue)
+    if (campo) updateSessionMemory({ [campo]: nextValue })
+  }
+
   const borderColor = validacion?.tipo === 'error' ? 'var(--red)' 
                     : validacion?.tipo === 'sospechoso' ? 'var(--yellow)'
                     : null
@@ -81,7 +97,7 @@ export function CampoInput({
             step={step}
             inputMode={inputMode}
             value={value || ''}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => handleChange(e.target.value)}
             placeholder={placeholder}
             aria-invalid={validacion?.tipo === 'error'}
             aria-describedby={validacion ? `${inputId}-msg` : undefined}
